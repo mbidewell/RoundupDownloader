@@ -8,42 +8,86 @@ BASE_URL="http://ivyroundup.googlecode.com/svn/trunk/repo"
 class IvyModule:
     @staticmethod
     def get_module(moduledef):
-        mod = IvyModule(moduledef[0].text)
+        mod = IvyModule(moduledef[1].text, moduledef[0].text)
         for sp in moduledef[2].xpath("./*/span"):
             mod.add_version(sp.text, sp.getparent().get("href"))
             
 	return mod
 
-    def __init__(self, name):
+    def __init__(self, org, name):
+        self.org = org
         self.name = name;
         self.versions = {}
 
     def add_version(self, version, url):
-        self.versions[version] = url
+        self.versions[version] = BASE_URL + url
 
+    def get_org(self):
+        return self.org
+    
     def get_name(self):
         return self.name
       
     def get_versions(self):
-        return self.versions.keys()
+        return self.versions
+
+class IvyRepository:
+    def __init__(self):
+        self.repo = {}
+
+    def add_org_module(self, org, module):
+        if not org in self.repo:
+            self.repo[org] = [module]
+        else:
+            self.repo[org].append(module)
+
+    def search(self, **criteria):
+        if criteria["org"] in self.repo:
+            modules = self.repo[criteria["org"]]
+            if "module" in criteria:
+                for m in modules:
+                    if m.get_name() == criteria["module"]:
+                        if "version" in criteria:
+                            if criteria["version"] in mod.get_versions():
+                                return m
+                        else:
+                            return m
+
+            else:
+                return modules
+
+
+
+def dump_ivy_object(obj):
+    print type(obj)
+    if isinstance(obj, IvyModule):
+        print "Organization: %s" % obj.get_org()
+        print "Name: %s" % obj.get_name()
+        print "Versions: "
+        for ver in obj.get_versions().keys():
+            print "\t%s => %s" % (ver, obj.get_versions()[ver])
+    elif type(obj) == type([]):
+        for o in obj:
+            dump_ivy_object(o)
+            print "=========================="
+
 
 
 def initialize_ivyloader():
+    global ivy_repo
     xslt = etree.XSLT(etree.parse(BASE_URL+"/xsl/modules.xsl"))
     xml = etree.parse(BASE_URL+"/modules.xml")
     html = xslt(xml)
 
     rows = html.xpath("//table/tbody/tr");
 
-    ivy = {}
+    ivy_repo = IvyRepository()
 
     for row in rows:
         tdlist = list(row)
-    
-        if not tdlist[1].text in ivy:
-            ivy[tdlist[1].text] = [IvyModule.get_module(tdlist)]
-        else:
-            ivy[tdlist[1].text].append(IvyModule.get_module(tdlist))
+        module = IvyModule.get_module(tdlist)
+        ivy_repo.add_org_module(tdlist[1].text, module)
+
 
 
 def main():
@@ -55,9 +99,21 @@ def main():
     group.add_argument("--install", "-i", nargs=3, help="Install ivy component")
     group.add_argument("--list", "-l", help="List all ivy components")
     args = parser.parse_args()
-    print(args)
+    
+    print args
+
+    if args.find != None:
+        result = ivy_repo.search(org=args.find[0])#, module=args.find[1], version=args.find[2])
+        dump_ivy_object(result)
+
+
+
+
+
+ivy_repo = None
 
 if __name__ == "__main__":
+    initialize_ivyloader()
     main()
 
                                      
