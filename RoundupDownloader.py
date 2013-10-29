@@ -41,14 +41,17 @@ class IvyRepository:
         else:
             self.repo[org].append(module)
 
-    def search(self, **criteria):
+    def get_modules(self):
+        return list(self.repo.values())
+
+    def search(self, criteria):
         if criteria["org"] in self.repo:
             modules = self.repo[criteria["org"]]
             if "module" in criteria:
                 for m in modules:
                     if m.get_name() == criteria["module"]:
                         if "version" in criteria:
-                            if criteria["version"] in mod.get_versions():
+                            if criteria["version"] in m.get_versions():
                                 return m
                         else:
                             return m
@@ -59,7 +62,6 @@ class IvyRepository:
 
 
 def dump_ivy_object(obj):
-    print type(obj)
     if isinstance(obj, IvyModule):
         print "Organization: %s" % obj.get_org()
         print "Name: %s" % obj.get_name()
@@ -88,6 +90,12 @@ def initialize_ivyloader():
         module = IvyModule.get_module(tdlist)
         ivy_repo.add_org_module(tdlist[1].text, module)
 
+def list_to_dict(keys, values):
+    dct = {}
+    for i in xrange(len(keys)):
+        if i < len(values):
+            dct[keys[i]] = values[i]
+    return dct
 
 
 def main():
@@ -97,14 +105,17 @@ def main():
 			help="Search for ivy component.  At least one of org, module, version required" )
     group.add_argument("--resolve", "-r", nargs=3,  help="Resolve ivy component")
     group.add_argument("--install", "-i", nargs=3, help="Install ivy component")
-    group.add_argument("--list", "-l", help="List all ivy components")
+    group.add_argument("--list", "-l", action="store_true", help="List all ivy components")
     args = parser.parse_args()
     
     print args
 
     if args.find != None:
-        result = ivy_repo.search(org=args.find[0])#, module=args.find[1], version=args.find[2])
-        dump_ivy_object(result)
+        result = ivy_repo.search(list_to_dict(["org", "module", "version"], args.find))
+        if result != None:
+            dump_ivy_object(result)
+    elif args.list:
+        dump_ivy_object(ivy_repo.get_modules())
 
 
 
