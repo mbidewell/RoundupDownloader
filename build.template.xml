@@ -1,0 +1,8 @@
+<project name="ivydownload" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<property name="ivy.distrib.dir" value="${basedir}/distrib"/>
+	<target name="ivy.fetch">
+		<ivy:resolve file="${ivy.dep.file}" />
+	</target>
+	<target name="ivy.install"/>
+
+</project>

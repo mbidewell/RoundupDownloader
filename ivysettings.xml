@@ -1,0 +1,11 @@
+<ivysettings>
+        <settings defaultResolver="ivyroundup" />
+        <caches  defaultCacheDir="${build.dir}/ivy-cache" checkUpToDate="false" />
+
+	<resolvers>
+    		<packager name="roundup" buildRoot="${user.home}/.ivy2/packager/build" resourceCache="${user.home}/.ivy2/packager/cache">
+        		<ivy pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/ivy.xml"/>
+        		<artifact pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/packager.xml"/>
+    		</packager>
+	</resolvers>
+</ivysettings>

@@ -1,6 +1,7 @@
 from lxml import etree
 
 import argparse
+import os
 
 
 BASE_URL="http://ivyroundup.googlecode.com/svn/trunk/repo"
@@ -97,6 +98,21 @@ def list_to_dict(keys, values):
             dct[keys[i]] = values[i]
     return dct
 
+def do_ivy_resolve(ivydep):
+    ivytmplfile = etree.parse("ivy.template.xml")
+    ivyfile = "ivy.%d.xml" % os.getpid()
+    depChild = ivytmplfile.getroot().find("dependencies")
+    dep = etree.Element("dependency")
+    
+    for key in ivydep.keys():
+        dep.set(key, ivydep[key])
+    
+    depChild.append(dep)
+
+    with open(ivyfile, "w") as f:
+        f.write(etree.tostring(ivytmplfile.getroot(), pretty_print=True))
+
+    os.system("ant -Divy.dep.file=%s -f build.template.xml ivy.fetch" % ivyfile)
 
 def main():
     parser = argparse.ArgumentParser(description='Search and download from IvyRoundup')
@@ -116,6 +132,8 @@ def main():
             dump_ivy_object(result)
     elif args.list:
         dump_ivy_object(ivy_repo.get_modules())
+    elif args.resolve:
+        do_ivy_resolve(list_to_dict(["org", "name", "rev"], args.resolve))
 
 
 
