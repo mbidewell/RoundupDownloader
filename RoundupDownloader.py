@@ -98,7 +98,7 @@ def list_to_dict(keys, values):
             dct[keys[i]] = values[i]
     return dct
 
-def do_ivy_resolve(ivydep):
+def do_ivy_retrieve(ivydep):
     ivytmplfile = etree.parse("ivy.template.xml")
     ivyfile = "ivy.%d.xml" % os.getpid()
     depChild = ivytmplfile.getroot().find("dependencies")
@@ -114,12 +114,14 @@ def do_ivy_resolve(ivydep):
 
     os.system("ant -Divy.dep.file=%s -f build.template.xml ivy.fetch" % ivyfile)
 
+    os.remove(ivyfile)
+
 def main():
     parser = argparse.ArgumentParser(description='Search and download from IvyRoundup')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--find", "-f", nargs='+',
 			help="Search for ivy component.  At least one of org, module, version required" )
-    group.add_argument("--resolve", "-r", nargs=3,  help="Resolve ivy component")
+    group.add_argument("--retrieve", "-r", nargs=3,  help="Resolve ivy component")
     group.add_argument("--install", "-i", nargs=3, help="Install ivy component")
     group.add_argument("--list", "-l", action="store_true", help="List all ivy components")
     args = parser.parse_args()
@@ -132,8 +134,8 @@ def main():
             dump_ivy_object(result)
     elif args.list:
         dump_ivy_object(ivy_repo.get_modules())
-    elif args.resolve:
-        do_ivy_resolve(list_to_dict(["org", "name", "rev"], args.resolve))
+    elif args.retrieve:
+        do_ivy_retrieve(list_to_dict(["org", "name", "rev"], args.retrieve))
 
 
 
